@@ -59,3 +59,8 @@ h2 {
 
 .analysis ul {
   list-style: none;
+
+.budget form .selected {
+    background-color: #00bcd4; /* Измените цвет на свой выбор */
+    color: #fff;
+}
