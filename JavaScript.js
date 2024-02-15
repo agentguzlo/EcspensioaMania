@@ -1,17 +1,32 @@
 document.addEventListener('DOMContentLoaded', function () {
-    // Восстанавливаем данные из локального хранилища при загрузке страницы
-    const storedData = JSON.parse(localStorage.getItem('budgetData')) || [];
+    let db;
 
-    // Создаем объект для хранения сумм каждой категории
-    const categorySum = {};
+    // Открываем (или создаем) базу данных
+    const request = indexedDB.open('BudgetAppDB', 1);
 
-    // Создаем элементы списка для каждой сохраненной записи
-    const budgetList = document.querySelector('.budgets');
-    storedData.forEach(function (item) {
-        addOrUpdateBudgetItem(item.category, item.amount);
-        // Суммируем суммы по категориям
-        categorySum[item.category] = (categorySum[item.category] || 0) + parseFloat(item.amount);
-    });
+    // Обработчик события успешного открытия/создания базы данных
+    request.onsuccess = function (event) {
+        db = event.target.result;
+        console.log('Database opened successfully');
+    };
+
+    // Обработчик события обновления базы данных (например, если ее версия изменилась)
+    request.onupgradeneeded = function (event) {
+        db = event.target.result;
+
+        // Создаем объектное хранилище для бюджетных данных
+        const budgetStore = db.createObjectStore('budget', { keyPath: 'id', autoIncrement: true });
+
+        // Создаем индекс для поиска по категории
+        budgetStore.createIndex('category', 'category', { unique: false });
+
+        console.log('Database upgrade complete');
+    };
+
+    // Обработчик события ошибки при открытии/создании базы данных
+    request.onerror = function (event) {
+        console.error('Error opening database:', event.target.error);
+    };
 
     // Добавляем обработчик формы для добавления записей
     document.querySelector('.budget form').addEventListener('submit', function (event) {
@@ -21,59 +36,60 @@ document.addEventListener('DOMContentLoaded', function () {
         const amount = document.getElementById('amount').value;
 
         if (selectedCategory && amount.trim() !== '') {
-            // Очищаем поля формы и сбрасываем выбранную категорию
-            document.getElementById('amount').value = '';
-            selectedCategory.classList.remove('selected');
-
-            // Сохраняем данные в локальное хранилище
-            saveDataToLocal(selectedCategory.textContent, amount);
-
-            // Суммируем суммы по категориям
-            categorySum[selectedCategory.textContent] = (categorySum[selectedCategory.textContent] || 0) + parseFloat(amount);
-
-            // Обновляем или добавляем элемент в список бюджета
-            addOrUpdateBudgetItem(selectedCategory.textContent, categorySum[selectedCategory.textContent]);
+            // Сохраняем данные в базу данных
+            saveDataToDB(selectedCategory.textContent, amount);
         } else {
             alert('Выберите категорию и введите сумму перед добавлением.');
         }
     });
 
-    // Функция для сохранения данных в локальное хранилище
-    function saveDataToLocal(category, amount) {
-        // Получаем текущие данные из локального хранилища
-        const storedData = JSON.parse(localStorage.getItem('budgetData')) || [];
+    // Функция для сохранения данных в базу данных
+    function saveDataToDB(category, amount) {
+        // Создаем транзакцию для записи данных
+        const transaction = db.transaction(['budget'], 'readwrite');
+        const budgetStore = transaction.objectStore('budget');
 
-        // Ищем существующую запись
-        const existingItemIndex = storedData.findIndex(item => item.category === category);
+        // Добавляем запись в базу данных
+        const request = budgetStore.add({ category: category, amount: amount + ' грн' });
 
-        if (existingItemIndex !== -1) {
-            // Обновляем существующую запись
-            storedData[existingItemIndex].amount = amount + ' грн';
-        } else {
-            // Добавляем новую запись
-            storedData.push({
-                category: category,
-                amount: amount + ' грн'
-            });
-        }
+        // Обработчик события успешного добавления записи
+        request.onsuccess = function (event) {
+            console.log('Data added to database successfully');
+            // Вызываем функцию для обновления интерфейса
+            updateBudgetList();
+        };
 
-        // Сохраняем обновленные данные в локальное хранилище
-        localStorage.setItem('budgetData', JSON.stringify(storedData));
+        // Обработчик события ошибки при добавлении записи
+        request.onerror = function (event) {
+            console.error('Error adding data to database:', event.target.error);
+        };
     }
 
-    // Функция для обновления или добавления элемента списка бюджета
-    function addOrUpdateBudgetItem(category, amount) {
-        const existingItem = document.querySelector(`.budgets li .category:contains('${category}')`);
+    // Функция для обновления списка бюджета из базы данных
+    function updateBudgetList() {
+        const transaction = db.transaction(['budget'], 'readonly');
+        const budgetStore = transaction.objectStore('budget');
 
-        if (existingItem) {
-            // Обновляем существующий элемент
-            existingItem.nextElementSibling.textContent = amount + ' грн';
-        } else {
-            // Создаем новый элемент
-            const newItem = document.createElement('li');
-            newItem.innerHTML = `<span class="category">${category}</span><span class="amount">${amount} грн</span>`;
-            budgetList.appendChild(newItem);
-        }
+        const request = budgetStore.getAll();
+
+        request.onsuccess = function (event) {
+            const data = event.target.result;
+            const budgetList = document.querySelector('.budgets');
+
+            // Очищаем текущий список бюджета
+            budgetList.innerHTML = '';
+
+            // Вставляем новые записи
+            data.forEach(function (item) {
+                const newItem = document.createElement('li');
+                newItem.innerHTML = `<span class="category">${item.category}</span><span class="amount">${item.amount}</span>`;
+                budgetList.appendChild(newItem);
+            });
+        };
+
+        request.onerror = function (event) {
+            console.error('Error retrieving data from database:', event.target.error);
+        };
     }
 });
 
@@ -81,8 +97,3 @@ document.addEventListener('DOMContentLoaded', function () {
 function toggleSelection(button) {
     button.classList.toggle('selected');
 }
-
-// Расширение для поддержки :contains в поиске элементов
-jQuery.expr[':'].contains = function (a, i, m) {
-    return jQuery(a).text().toUpperCase().indexOf(m[3].toUpperCase()) >= 0;
-};
