@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Веб-додаток для бюджетування</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="Style.css">
 </head>
 <body>
   <header>
@@ -15,14 +15,12 @@
       <h2>Створення особистого бюджету</h2>
       <form action="budget.php" method="post">
         <label for="category">Категорія:</label>
-        <select name="category" id="category">
-          <option value="food">Продукти харчування</option>
-          <option value="transport">Транспорт</option>
-          <option value="entertainment">Розваги</option>
-          <option value="clothing">Одяг</option>
-          <option value="housing">Житло</option>
-          <option value="other">Інші</option>
-        </select>
+        <button type="button">Комуналка</button>
+        <button type="button">Одяг</button>
+        <button type="button">Їжа</button>
+        <button type="button">Транспорт</button>
+        <button type="button">Розваги</button>
+        <button type="button">інше</button>
         <label for="amount">Сума:</label>
         <input type="number" name="amount" id="amount">
         <button type="submit">Додати</button>
