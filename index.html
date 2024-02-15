@@ -15,12 +15,12 @@
       <h2>Створення особистого бюджету</h2>
       <form action="budget.php" method="post">
         <label for="category">Категорія:</label>
-        <button type="button">Комуналка</button>
-        <button type="button">Одяг</button>
-        <button type="button">Їжа</button>
-        <button type="button">Транспорт</button>
-        <button type="button">Розваги</button>
-        <button type="button">інше</button>
+        <button type="button" onclick="toggleSelection(this)">Комуналка</button>
+        <button type="button" onclick="toggleSelection(this)">Одяг</button>
+        <button type="button" onclick="toggleSelection(this)">Їжа</button>
+        <button type="button" onclick="toggleSelection(this)">Транспорт</button>
+        <button type="button" onclick="toggleSelection(this)">Розваги</button>
+        <button type="button" onclick="toggleSelection(this)">інше</button>
         <label for="amount">Сума:</label>
         <input type="number" name="amount" id="amount">
         <button type="submit">Додати</button>
