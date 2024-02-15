@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Создаем элементы списка для каждой сохраненной записи
     const budgetList = document.querySelector('.budgets');
     storedData.forEach(function (item) {
-        addBudgetItem(item.category, item.amount);
+        addOrUpdateBudgetItem(item.category, item.amount);
         // Суммируем суммы по категориям
         categorySum[item.category] = (categorySum[item.category] || 0) + parseFloat(item.amount);
     });
@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', function () {
             categorySum[selectedCategory.textContent] = (categorySum[selectedCategory.textContent] || 0) + parseFloat(amount);
 
             // Обновляем или добавляем элемент в список бюджета
-            updateBudgetList(selectedCategory.textContent, categorySum[selectedCategory.textContent]);
+            addOrUpdateBudgetItem(selectedCategory.textContent, categorySum[selectedCategory.textContent]);
         } else {
             alert('Выберите категорию и введите сумму перед добавлением.');
         }
@@ -43,18 +43,26 @@ document.addEventListener('DOMContentLoaded', function () {
         // Получаем текущие данные из локального хранилища
         const storedData = JSON.parse(localStorage.getItem('budgetData')) || [];
 
-        // Добавляем новую запись
-        storedData.push({
-            category: category,
-            amount: amount + ' грн'
-        });
+        // Ищем существующую запись
+        const existingItemIndex = storedData.findIndex(item => item.category === category);
+
+        if (existingItemIndex !== -1) {
+            // Обновляем существующую запись
+            storedData[existingItemIndex].amount = amount + ' грн';
+        } else {
+            // Добавляем новую запись
+            storedData.push({
+                category: category,
+                amount: amount + ' грн'
+            });
+        }
 
         // Сохраняем обновленные данные в локальное хранилище
         localStorage.setItem('budgetData', JSON.stringify(storedData));
     }
 
-    // Функция для обновления списка бюджета
-    function updateBudgetList(category, amount) {
+    // Функция для обновления или добавления элемента списка бюджета
+    function addOrUpdateBudgetItem(category, amount) {
         const existingItem = document.querySelector(`.budgets li .category:contains('${category}')`);
 
         if (existingItem) {
@@ -62,15 +70,10 @@ document.addEventListener('DOMContentLoaded', function () {
             existingItem.nextElementSibling.textContent = amount + ' грн';
         } else {
             // Создаем новый элемент
-            addBudgetItem(category, amount);
+            const newItem = document.createElement('li');
+            newItem.innerHTML = `<span class="category">${category}</span><span class="amount">${amount} грн</span>`;
+            budgetList.appendChild(newItem);
         }
-    }
-
-    // Функция для создания элемента списка бюджета
-    function addBudgetItem(category, amount) {
-        const newItem = document.createElement('li');
-        newItem.innerHTML = `<span class="category">${category}</span><span class="amount">${amount} грн</span>`;
-        budgetList.appendChild(newItem);
     }
 });
 
