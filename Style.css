@@ -1,66 +1,72 @@
 body {
-  font-family: sans-serif;
-  margin: 0;
-  padding: 20px;
+    font-family: sans-serif;
+    margin: 0;
+    padding: 20px;
 }
 
 header {
-  background-color: #333;
-  color: #fff;
-  padding: 10px;
-  text-align: center;
+    background-color: #333;
+    color: #fff;
+    padding: 10px;
+    text-align: center;
 }
 
 main {
-  display: flex;
-  flex-direction: column;
+    display: flex;
+    flex-direction: column;
 }
 
 section {
-  margin-bottom: 20px;
-  padding: 10px;
-  border: 1px solid #ddd;
+    margin-bottom: 20px;
+    padding: 10px;
+    border: 1px solid #ddd;
 }
 
 h2 {
-  margin-top: 0;
+    margin-top: 0;
 }
 
 .budget {
-  display: flex;
-  flex-direction: column;
+    display: flex;
+    flex-direction: column;
 }
 
 .budget form {
-  display: flex;
-  align-items: center;
+    display: flex;
+    ali
+body {
+    font-family: sans-serif;
+    margin: 0;
+    padding: 20px;
 }
 
-.budget label {
-  margin-right: 10px;
-}
-
-.budget ul {
-  list-style: none;
-  padding: 0;
-}
-
-.budget li {
-  display: flex;
-  justify-content: space-between;
-  padding: 5px;
-  border-bottom: 1px solid #ddd;
-}
-
-.analysis {
-  display: flex;
-  flex-direction: column;
-}
-
-.analysis ul {
-  list-style: none;
-
-.budget form .selected {
-    background-color: #00bcd4; /* Измените цвет на свой выбор */
+header {
+    background-color: #333;
     color: #fff;
+    padding: 10px;
+    text-align: center;
 }
+
+main {
+    display: flex;
+    flex-direction: column;
+}
+
+section {
+    margin-bottom: 20px;
+    padding: 10px;
+    border: 1px solid #ddd;
+}
+
+h2 {
+    margin-top: 0;
+}
+
+.budget {
+    display: flex;
+    flex-direction: column;
+}
+
+.budget form {
+    display: flex;
+    ali
