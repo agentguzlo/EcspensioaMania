@@ -2,12 +2,17 @@ document.addEventListener('DOMContentLoaded', function () {
     // Восстанавливаем данные из локального хранилища при загрузке страницы
     const storedData = JSON.parse(localStorage.getItem('budgetData')) || [];
 
+    // Создаем объект для хранения сумм каждой категории
+    const categorySum = {};
+
     // Создаем элементы списка для каждой сохраненной записи
     const budgetList = document.querySelector('.budgets');
     storedData.forEach(function (item) {
-        const newItem = document.createElement('li');
-        newItem.innerHTML = `<span class="category">${item.category}</span><span class="amount">${item.amount}</span>`;
+        const newItem = createBudgetItem(item.category, item.amount);
         budgetList.appendChild(newItem);
+
+        // Суммируем суммы по категориям
+        categorySum[item.category] = (categorySum[item.category] || 0) + parseFloat(item.amount);
     });
 
     // Добавляем обработчик формы для добавления записей
@@ -19,10 +24,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (selectedCategory && amount.trim() !== '') {
             // Создаем новый элемент списка бюджета
-            const newItem = document.createElement('li');
-            newItem.innerHTML = `<span class="category">${selectedCategory.textContent}</span><span class="amount">${amount} грн</span>`;
-
-            // Добавляем элемент в список бюджета
+            const newItem = createBudgetItem(selectedCategory.textContent, amount);
             budgetList.appendChild(newItem);
 
             // Очищаем поля формы и сбрасываем выбранную категорию
@@ -31,10 +33,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Сохраняем данные в локальное хранилище
             saveDataToLocal(newItem);
+
+            // Суммируем суммы по категориям
+            categorySum[selectedCategory.textContent] = (categorySum[selectedCategory.textContent] || 0) + parseFloat(amount);
         } else {
             alert('Выберите категорию и введите сумму перед добавлением.');
         }
     });
+
+    // Функция для создания элемента списка бюджета
+    function createBudgetItem(category, amount) {
+        const newItem = document.createElement('li');
+        newItem.innerHTML = `<span class="category">${category}</span><span class="amount">${amount} грн</span>`;
+        return newItem;
+    }
 
     // Функция для сохранения данных в локальное хранилище
     function saveDataToLocal(item) {
