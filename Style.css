@@ -33,35 +33,21 @@ h2 {
 
 .budget form {
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    align-items: flex-start;
 }
 
 .budget label {
-    margin-right: 10px;
+    margin-bottom: 10px;
 }
 
-.budget button.selected {
-    background-color: #00bcd4;
-    color: #fff;
+.budget button {
+    margin-bottom: 5px;
 }
 
-.budget ul {
-    list-style: none;
-    padding: 0;
-}
-
-.budget li {
+.budgets li {
     display: flex;
     justify-content: space-between;
     padding: 5px;
     border-bottom: 1px solid #ddd;
-}
-
-.analysis {
-    display: flex;
-    flex-direction: column;
-}
-
-.analysis ul {
-    list-style: none;
 }
