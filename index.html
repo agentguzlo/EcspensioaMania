@@ -15,26 +15,14 @@
       <h2>Створення особистого бюджету</h2>
       <form>
         <label for="category">Категорія:</label>
-        <button type="button" onclick="toggleSelection(this)" id="комуналка">Комуналка</button>
-        <button type="button" onclick="toggleSelection(this)" id="одяг">Одяг</button>
-        <button type="button" onclick="toggleSelection(this)" id="їжа">Їжа</button>
-        <button type="button" onclick="toggleSelection(this)" id="транспорт">Транспорт</button>
-        <button type="button" onclick="toggleSelection(this)" id="розваги">Розваги</button>
-        <button type="button" onclick="toggleSelection(this)" id="інше">Інше</button>
-        <label for="amount">Сума:</label>
-        <input type="number" name="amount" id="amount">
-        <button type="submit">Додати</button>
+        <button type="button" onclick="increaseAmount('комуналка')">Комуналка</button>
+        <button type="button" onclick="increaseAmount('одяг')">Одяг</button>
+        <button type="button" onclick="increaseAmount('їжа')">Їжа</button>
+        <button type="button" onclick="increaseAmount('транспорт')">Транспорт</button>
+        <button type="button" onclick="increaseAmount('розваги')">Розваги</button>
+        <button type="button" onclick="increaseAmount('інше')">Інше</button>
+        <ul class="budgets"></ul>
       </form>
-      <ul class="budgets">
-        <li>
-          <span class="category">Продукти харчування</span>
-          <span class="amount">1000 грн</span>
-        </li>
-        <li>
-          <span class="category">Транспорт</span>
-          <span class="amount">500 грн</span>
-        </li>
-      </ul>
     </section>
     <section class="analysis">
       <h2>Фінансовий аналіз</h2>
