@@ -13,13 +13,21 @@
     <main>
         <section class="categories">
             <h2>Categories</h2>
-            <ul id="categoryList"></ul>
+            <select id="category" required>
+                <option value="1">Развлечения</option>
+                <option value="2">Еда</option>
+            </select>
         </section>
         <section class="expenses">
             <h2>Add Expense</h2>
             <form id="expenseForm">
-                <label for="category">Category:</label>
-                <select id="category" required></select>
                 <label for="amount">Amount:</label>
                 <input type="number" id="amount" required>
                 <button type="submit">Add Expense</button>
+            </form>
+            <ul id="expenseList"></ul>
+        </section>
+    </main>
+    <script src="script.js"></script>
+</body>
+</html>
