@@ -1,13 +1,10 @@
 document.addEventListener('DOMContentLoaded', function () {
-    const categoryList = document.getElementById('categoryList');
-    const expenseForm = document.getElementById('expenseForm');
     const categorySelect = document.getElementById('category');
+    const expenseForm = document.getElementById('expenseForm');
     const expenseList = document.getElementById('expenseList');
 
-    // Открываем или создаем базу данных 'expenseDB' и версию 2
     const request = indexedDB.open('expenseDB', 2);
 
-    // Обработчик события обновления базы данных
     request.onupgradeneeded = function (event) {
         const db = event.target.result;
 
@@ -21,17 +18,12 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
 
-    // Обработчик события открытия базы данных
     request.onsuccess = function (event) {
         const db = event.target.result;
 
-        // Загружаем или добавляем категории в базу данных
         loadOrAddCategories(db);
-
-        // Загружаем сохраненные расходы из базы данных
         loadExpenses(db);
 
-        // Добавляем обработчик события подтверждения формы для добавления расходов
         expenseForm.addEventListener('submit', function (event) {
             event.preventDefault();
             addExpense(db);
@@ -53,7 +45,6 @@ function loadOrAddCategories(db) {
         const categories = event.target.result;
 
         if (categories.length === 0) {
-            // Если база данных пуста, добавляем две категории
             const defaultCategories = ['Развлечения', 'Еда'];
 
             const addCategoriesTransaction = db.transaction(['categories'], 'readwrite');
@@ -64,11 +55,9 @@ function loadOrAddCategories(db) {
             });
 
             addCategoriesTransaction.oncomplete = function () {
-                // После добавления категорий, снова вызываем loadCategories для обновления списка
                 loadCategories(db);
             };
         } else {
-            // Если категории уже есть в базе данных, просто загружаем их
             loadCategories(db);
         }
     };
@@ -83,7 +72,6 @@ function loadCategories(db) {
     request.onsuccess = function (event) {
         const categories = event.target.result;
 
-        // Очищаем и заполняем список категорий из базы данных
         categorySelect.innerHTML = '';
 
         categories.forEach(category => {
@@ -99,29 +87,33 @@ function loadExpenses(db) {
     const transaction = db.transaction(['expenses'], 'readonly');
     const expenseStore = transaction.objectStore('expenses');
 
-    const request = expenseStore.getAll();
+    const request = expenseStore.openCursor();
 
     request.onsuccess = function (event) {
-        const expenses = event.target.result;
+        const cursor = event.target.result;
 
-        expenses.forEach(expense => {
-            renderExpense(expense);
-        });
+        if (cursor) {
+            renderExpense(cursor.value);
+            cursor.continue();
+        }
     };
 }
 
 function addExpense(db) {
-    const categoryIndex = categorySelect.selectedIndex;
-    const selectedCategory = categorySelect.options[categoryIndex].text;
-    const amount = parseFloat(document.getElementById('amount').value);
+    const amountInput = document.getElementById('amount');
+    const categorySelect = document.getElementById('category');
+
+    const amount = parseFloat(amountInput.value);
 
     if (!isNaN(amount) && amount > 0) {
+        const category = categorySelect.options[categorySelect.selectedIndex].text;
+
         const transaction = db.transaction(['expenses'], 'readwrite');
         const expenseStore = transaction.objectStore('expenses');
 
         const expense = {
-            category: selectedCategory,
-            amount: amount.toFixed(2), // Округляем до двух знаков после запятой
+            category,
+            amount: amount.toFixed(2) + ' грн',
             timestamp: new Date().getTime()
         };
 
@@ -141,6 +133,6 @@ function addExpense(db) {
 
 function renderExpense(expense) {
     const listItem = document.createElement('li');
-    listItem.innerHTML = `<span>${expense.category}</span><span>${expense.amount} грн</span>`;
+    listItem.innerHTML = `<span>${expense.category}</span><span>${expense.amount}</span>`;
     expenseList.appendChild(listItem);
 }
