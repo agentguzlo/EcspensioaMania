@@ -2,6 +2,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const categorySelect = document.getElementById('category');
     const expenseForm = document.getElementById('expenseForm');
     const expenseList = document.getElementById('expenseList');
+    const totalSpent = document.getElementById('totalSpent');
+    const categorySpending = document.getElementById('categorySpending');
 
     const request = indexedDB.open('expenseDB', 2);
 
@@ -23,6 +25,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         loadOrAddCategories(db);
         loadExpenses(db);
+        updateTotalSpent(db);
+        updateCategorySpending(db);
 
         expenseForm.addEventListener('submit', function (event) {
             event.preventDefault();
@@ -135,4 +139,50 @@ function renderExpense(expense) {
     const listItem = document.createElement('li');
     listItem.innerHTML = `<span>${expense.category}</span><span>${expense.amount}</span>`;
     expenseList.appendChild(listItem);
+}
+
+function updateTotalSpent(db) {
+    const transaction = db.transaction(['expenses'], 'readonly');
+    const expenseStore = transaction.objectStore('expenses');
+
+    const request = expenseStore.getAll();
+
+    request.onsuccess = function (event) {
+        const expenses = event.target.result;
+        const total = expenses.reduce((sum, expense) => sum + parseFloat(expense.amount), 0).toFixed(2) + ' грн';
+
+        totalSpent.textContent = `Total Spent: ${total}`;
+    };
+}
+
+function updateCategorySpending(db) {
+    const transaction = db.transaction(['expenses'], 'readonly');
+    const expenseStore = transaction.objectStore('expenses');
+
+    const request = expenseStore.getAll();
+
+    request.onsuccess = function (event) {
+        const expenses = event.target.result;
+
+        const categoryMap = new Map();
+
+        expenses.forEach(expense => {
+            const category = expense.category;
+            const amount = parseFloat(expense.amount);
+
+            if (categoryMap.has(category)) {
+                categoryMap.set(category, categoryMap.get(category) + amount);
+            } else {
+                categoryMap.set(category, amount);
+            }
+        });
+
+        categorySpending.innerHTML = '';
+
+        categoryMap.forEach((amount, category) => {
+            const listItem = document.createElement('li');
+            listItem.textContent = `${category}: ${amount.toFixed(2)} грн`;
+            categorySpending.appendChild(listItem);
+        });
+    };
 }
