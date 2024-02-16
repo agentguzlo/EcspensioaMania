@@ -4,8 +4,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const categorySelect = document.getElementById('category');
     const expenseList = document.getElementById('expenseList');
 
-    // Открываем или создаем базу данных 'expenseDB' и версию 1
-    const request = indexedDB.open('expenseDB', 1);
+    // Открываем или создаем базу данных 'expenseDB' и версию 2
+    const request = indexedDB.open('expenseDB', 2);
 
     // Обработчик события обновления базы данных
     request.onupgradeneeded = function (event) {
@@ -25,8 +25,8 @@ document.addEventListener('DOMContentLoaded', function () {
     request.onsuccess = function (event) {
         const db = event.target.result;
 
-        // Заполняем список категорий из базы данных
-        loadCategories(db);
+        // Загружаем или добавляем категории в базу данных
+        loadOrAddCategories(db);
 
         // Загружаем сохраненные расходы из базы данных
         loadExpenses(db);
@@ -43,6 +43,37 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 });
 
+function loadOrAddCategories(db) {
+    const transaction = db.transaction(['categories'], 'readonly');
+    const categoryStore = transaction.objectStore('categories');
+
+    const request = categoryStore.getAll();
+
+    request.onsuccess = function (event) {
+        const categories = event.target.result;
+
+        if (categories.length === 0) {
+            // Если база данных пуста, добавляем две категории
+            const defaultCategories = ['Развлечения', 'Еда'];
+
+            const addCategoriesTransaction = db.transaction(['categories'], 'readwrite');
+            const addCategoriesStore = addCategoriesTransaction.objectStore('categories');
+
+            defaultCategories.forEach(name => {
+                addCategoriesStore.add({ name });
+            });
+
+            addCategoriesTransaction.oncomplete = function () {
+                // После добавления категорий, снова вызываем loadCategories для обновления списка
+                loadCategories(db);
+            };
+        } else {
+            // Если категории уже есть в базе данных, просто загружаем их
+            loadCategories(db);
+        }
+    };
+}
+
 function loadCategories(db) {
     const transaction = db.transaction(['categories'], 'readonly');
     const categoryStore = transaction.objectStore('categories');
@@ -51,6 +82,9 @@ function loadCategories(db) {
 
     request.onsuccess = function (event) {
         const categories = event.target.result;
+
+        // Очищаем и заполняем список категорий из базы данных
+        categorySelect.innerHTML = '';
 
         categories.forEach(category => {
             const option = document.createElement('option');
