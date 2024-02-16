@@ -1,110 +1,112 @@
-let db;
-
 document.addEventListener('DOMContentLoaded', function () {
-    const request = indexedDB.open('budgetDB', 1);
+    const categoryList = document.getElementById('categoryList');
+    const expenseForm = document.getElementById('expenseForm');
+    const categorySelect = document.getElementById('category');
+    const expenseList = document.getElementById('expenseList');
 
+    // Открываем или создаем базу данных 'expenseDB' и версию 1
+    const request = indexedDB.open('expenseDB', 1);
+
+    // Обработчик события обновления базы данных
     request.onupgradeneeded = function (event) {
         const db = event.target.result;
 
-        if (!db.objectStoreNames.contains('budget')) {
-            const budgetStore = db.createObjectStore('budget', { keyPath: 'id', autoIncrement: true });
-            budgetStore.createIndex('category', 'category', { unique: false });
+        if (!db.objectStoreNames.contains('categories')) {
+            db.createObjectStore('categories', { keyPath: 'id', autoIncrement: true });
+        }
+
+        if (!db.objectStoreNames.contains('expenses')) {
+            const expensesStore = db.createObjectStore('expenses', { keyPath: 'id', autoIncrement: true });
+            expensesStore.createIndex('category', 'category', { unique: false });
         }
     };
 
+    // Обработчик события открытия базы данных
     request.onsuccess = function (event) {
-        db = event.target.result;
-        // Вызываем функцию для обновления списка бюджета при успешном открытии базы данных
-        updateBudgetList();
+        const db = event.target.result;
+
+        // Заполняем список категорий из базы данных
+        loadCategories(db);
+
+        // Загружаем сохраненные расходы из базы данных
+        loadExpenses(db);
+
+        // Добавляем обработчик события подтверждения формы для добавления расходов
+        expenseForm.addEventListener('submit', function (event) {
+            event.preventDefault();
+            addExpense(db);
+        });
     };
 
     request.onerror = function (event) {
         console.error('Error opening database:', event.target.error);
     };
-
-    // Добавляем обработчик формы для добавления записей
-    document.querySelector('.budget form').addEventListener('submit', function (event) {
-        event.preventDefault();
-
-        const selectedCategory = document.querySelector('.budget form .selected');
-        const amount = document.getElementById('amount').value;
-
-        if (selectedCategory && amount.trim() !== '') {
-            // Проверяем, существует ли уже запись с выбранной категорией
-            const category = selectedCategory.textContent;
-            getEntryByCategory(category).then(existingEntry => {
-                if (existingEntry) {
-                    // Если запись существует, обновляем ее
-                    updateDataInDB(existingEntry.id, category, parseFloat(existingEntry.amount) + parseFloat(amount));
-                } else {
-                    // Если записи не существует, добавляем новую
-                    saveDataToDB(category, amount);
-                }
-            }).catch(error => {
-                console.error('Error:', error);
-            });
-        } else {
-            alert('Выберите категорію та введіть суму перед додаванням.');
-        }
-    });
 });
 
-// Функция для поиска записи по категории
-function getEntryByCategory(category) {
-    const transaction = db.transaction(['budget'], 'readonly');
-    const budgetStore = transaction.objectStore('budget');
-    const categoryIndex = budgetStore.index('category');
+function loadCategories(db) {
+    const transaction = db.transaction(['categories'], 'readonly');
+    const categoryStore = transaction.objectStore('categories');
 
-    const request = categoryIndex.get(category);
+    const request = categoryStore.getAll();
 
-    return new Promise((resolve, reject) => {
-        request.onsuccess = function (event) {
-            const entry = event.target.result;
-            resolve(entry);
+    request.onsuccess = function (event) {
+        const categories = event.target.result;
+
+        categories.forEach(category => {
+            const option = document.createElement('option');
+            option.value = category.id;
+            option.textContent = category.name;
+            categorySelect.appendChild(option);
+        });
+    };
+}
+
+function loadExpenses(db) {
+    const transaction = db.transaction(['expenses'], 'readonly');
+    const expenseStore = transaction.objectStore('expenses');
+
+    const request = expenseStore.getAll();
+
+    request.onsuccess = function (event) {
+        const expenses = event.target.result;
+
+        expenses.forEach(expense => {
+            renderExpense(expense);
+        });
+    };
+}
+
+function addExpense(db) {
+    const categoryIndex = categorySelect.selectedIndex;
+    const selectedCategory = categorySelect.options[categoryIndex].text;
+    const amount = parseFloat(document.getElementById('amount').value);
+
+    if (!isNaN(amount) && amount > 0) {
+        const transaction = db.transaction(['expenses'], 'readwrite');
+        const expenseStore = transaction.objectStore('expenses');
+
+        const expense = {
+            category: selectedCategory,
+            amount: amount.toFixed(2), // Округляем до двух знаков после запятой
+            timestamp: new Date().getTime()
+        };
+
+        const request = expenseStore.add(expense);
+
+        request.onsuccess = function () {
+            renderExpense(expense);
         };
 
         request.onerror = function (event) {
-            console.error('Error retrieving data from database:', event.target.error);
-            reject(null);
+            console.error('Error adding expense to database:', event.target.error);
         };
-    });
+    } else {
+        alert('Please enter a valid amount greater than zero.');
+    }
 }
 
-// Функция для обновления данных в базе данных
-function updateDataInDB(id, category, amount) {
-    const transaction = db.transaction(['budget'], 'readwrite');
-    const budgetStore = transaction.objectStore('budget');
-
-    const request = budgetStore.put({ id: id, category: category, amount: amount + ' грн' });
-
-    request.onsuccess = function (event) {
-        console.log('Data updated in database successfully');
-        updateBudgetList();
-    };
-
-    request.onerror = function (event) {
-        console.error('Error updating data in database:', event.target.error);
-    };
-}
-
-// Функция для сохранения данных в базе данных
-function saveDataToDB(category, amount) {
-    const transaction = db.transaction(['budget'], 'readwrite');
-    const budgetStore = transaction.objectStore('budget');
-
-    const request = budgetStore.add({ category: category, amount: amount + ' грн' });
-
-    request.onsuccess = function (event) {
-        console.log('Data saved to database successfully');
-        updateBudgetList();
-    };
-
-    request.onerror = function (event) {
-        console.error('Error saving data to database:', event.target.error);
-    };
-}
-
-// Функция для обновления списка бюджета в интерфейсе
-function updateBudgetList() {
-    // Ваш код для обновления списка бюджета в интерфейсе
+function renderExpense(expense) {
+    const listItem = document.createElement('li');
+    listItem.innerHTML = `<span>${expense.category}</span><span>${expense.amount} грн</span>`;
+    expenseList.appendChild(listItem);
 }
